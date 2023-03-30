@@ -1,8 +1,3 @@
-import cv2
-import numpy as np
-import os
-
-
 def reconnaissanceFaciale(identifiantAReconnaitre,path_dir):
     try:
         # Chargement du modèle d'entraînement
@@ -64,4 +59,3 @@ def reconnaissanceFaciale(identifiantAReconnaitre,path_dir):
         return "OK"
     except:
         print("Erreur")
-reconnaissanceFaciale('jeanne','Images_Reco')
