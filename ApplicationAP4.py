@@ -1,96 +1,105 @@
-import sqlite3
 from tkinter import *
 import RPi.GPIO as GPIO
 from mfrc522 import SimpleMFRC522
 import requests
-"""
+import time
 import cv2
 import numpy as np
 import os
-
 from ReconnaissanceFaciale import reconnaissanceFaciale
-from insertLogAcces import insertLogAcces"""
+from insertLogAcces import insertLogAcces
 
-path_image_reco = "Images_Reco"
-form = Tk()
+widgets = []
+window = Tk()
+window.title("Authentification - AP4")
+window.geometry("350x180")
 
 def formulaire():
-    form.geometry("300x200")
-    
-    label = Label(form, text="BONJOUR")
-    label.pack(padx=5,pady=5)
+    labelBienvenue = Label(window, text="Bienvenue !")
+    labelBienvenue.pack(padx=5,pady=5)
     
     valueId = StringVar()
     valueId.set("")
-    identifiant = Entry(form, textvariable=valueId, width=15)
-    identifiant.pack()
+    entryId = Entry(window, textvariable=valueId, width=15,font=("Helvetica",15))
+    entryId.pack()
     
-    valueMdp = StringVar()
-    valueMdp.set("")
-    mdp = Entry(form, textvariable=valueMdp, width=15)
-    mdp.pack(padx=5,pady=5)
+    valuePassword = StringVar()
+    valuePassword.set("")
+    entryPassword = Entry(window, textvariable=valuePassword, width=15,show="*",font=("Helvetica",15))
+    entryPassword.pack(padx=5,pady=5)
     
-    btnOK = Button(form, text="OK",command=lambda:validation(valueId.get(),valueMdp.get()))
-    btnOK.pack(side=RIGHT,padx=5,pady=5)
+    btnOk = Button(window, text="Ok",command=lambda:validation(valueId.get(),valuePassword.get()),width=10)
+    btnOk.pack(side=RIGHT,padx=5,pady=5)
     
-    btnCANCEL = Button(form, text="ANNULER",command=lambda:form.destroy())
-    btnCANCEL.pack(side=LEFT,padx=5,pady=5)
+    btnCancel = Button(window, text="Cancel",command=lambda:window.destroy(),width=10)
+    btnCancel.pack(side=LEFT,padx=5,pady=5)
+    
+    widgets.append(labelBienvenue)
+    widgets.append(entryId)
+    widgets.append(entryPassword)
+    widgets.append(btnOk)
+    widgets.append(btnCancel)
+    
+    window.mainloop()
 
 def validation(identifiant,mdp):
     try:
         url = "https://www.btssio-carcouet.fr/ppe4/public/connect2/"+identifiant+"/"+mdp+"/infirmiere"
-        req = requests.get(url)
-        data = req.json()
-        
-        if(not 'status' in data):
-            formBadge(identifiant)
+        payload = requests.get(url).json()
+        if(not 'status' in payload):
+            #formBadge(identifiant)
+            destroyWidgets()
         else:
-            print("erreur")
-        form.destroy()
+            insertLog("1",identifiant,"0","Mauvaise combinaison login/password")
     except:
         print("Erreur de validation")
 
-def formBadge(identifiant):
-    window = Tk()
-    window.geometry("250x150")
-    
-    label = Label(window, text="Bonjour "+identifiant+" !\nPlacez votre badge")
-    label.pack()
-    
-    valueCode = StringVar()
-    valueCode.set("996305625869")
-    entree = Entry(window, textvariable=valueCode, width=15)
-    entree.pack(padx=5,pady=5)
-    
-    btnEcoute = Button(window, text="Ecouter",command=lambda:validationBadge(identifiant,window,valueCode.get()))
-    btnEcoute.pack(side=LEFT,padx=5,pady=5)
+# -------------------- /\ Nouvelle mise en forme /\ ------------------
 
-def validationBadge(identifiant,window,idEntree):
+def formBadge(identifiant):
+    labelBienvenue = Label(window, text="Bonjour "+identifiant+" !")
+    labelBienvenue.pack()
+    
+    cptText = StringVar()
+    cptText.set("")
+    labelCpt = Label(window, textvariable=cptText)
+    labelCpt.pack()
+    
+    
     reader = SimpleMFRC522()
     try:
-        #id, text = reader.read()
-        print(idEntree)
-        id = idEntree
+        timer = time.time()
+        id, text = None,None
+        while time.time() - timer < 5:
+            id, text = reader.read_no_block()
+            if id is not None:
+                break
+            time.sleep(0.1)
+            print(time.time()-timer)
+        window.destroy()
         url = "https://www.btssio-carcouet.fr/ppe4/public/badge/" + identifiant + "/"+ str(id)
         req = requests.get(url)
         data = req.json()
         
         if("true" in data["status"]):
             print('ok Badge')
-            #formRecoFaciale(identifiant)
-        window.destroy()
     finally:
         GPIO.cleanup()
+
 """
 def formRecoFaciale(identifiant):
-    window = Tk()
-    window.geometry("250x150")
-    
-    label = Label(window, text="Bonjour "+identifiant)
-    label.pack(padx=5,pady=5)
+    path_image_reco = "Images_Reco"
     
     btnCANCEL = Button(window, text="IOEZG",command=lambda:reconnaissanceFaciale(identifiant,path_image_reco))
     btnCANCEL.pack(side=LEFT,padx=5,pady=5)"""
 
+def insertLog(numeroPhase,nom,numPhase,commentaire):
+    window.destroy()
+    insertLogAcces(numeroPhase,nom,numPhase,commentaire)
+
+def destroyWidgets():
+    for widget in widgets:
+        widget.destroy()
+    widgets.clear()
+
 formulaire()
-    

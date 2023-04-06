@@ -33,7 +33,7 @@ def reconnaissanceFaciale(identifiantAReconnaitre,path_dir):
                 pasreconnu = False
             # Reconnaissance des visages détectés
             for (x, y, w, h) in faces:
-                roi = gray[y-50:y+h+30, x:x+w]
+                roi = gray[y:y+h, x:x+w]
                 label, confidence = recognizer.predict(roi)
                 if confidence < confidence_threshold:
                     name = "Personne {}".format(names[label])
