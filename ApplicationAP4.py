@@ -1,6 +1,7 @@
 from tkinter import *
 from mfrc522 import SimpleMFRC522
-import requests, time, cv2, numpy as np, os, microbit, RPi.GPIO as GPIO
+import requests, time, RPi.GPIO as GPIO
+#import microbit
 
 from ReconnaissanceFaciale import reconnaissanceFaciale
 from insertLogAcces import insertLogAcces
@@ -8,10 +9,17 @@ from insertLogAcces import insertLogAcces
 widgets = []
 window = Tk()
 window.title("Authentification - AP4")
-window.geometry("350x180")
 
-VALID = microbit.Image.YES
-INVALID = microbit.Image.NO
+width = 350
+height = 180
+x = (window.winfo_screenwidth()/2) - (width/2)
+y = (window.winfo_screenheight()/2) - (height/2)
+window.geometry('%dx%d+%d+%d' % (width,height,x,y))
+
+# VALID = microbit.Image.YES
+# INVALID = microbit.Image.NO
+
+path_image_reco = "Images_Reco"
 
 def formulaire():
     labelBienvenue = Label(window, text="Bienvenue !")
@@ -30,7 +38,7 @@ def formulaire():
     btnOk = Button(window, text="Ok",command=lambda:validation(valueId.get(),valuePassword.get()),width=10)
     btnOk.pack(side=RIGHT,padx=5,pady=5)
     
-    btnCancel = Button(window, text="Cancel",command=lambda:window.destroy(),width=10)
+    btnCancel = Button(window, text="Quitter",command=lambda:window.destroy(),width=10)
     btnCancel.pack(side=LEFT,padx=5,pady=5)
     
     widgets.append(labelBienvenue)
@@ -47,11 +55,11 @@ def validation(identifiant,mdp):
         payload = requests.get(url).json()
         if(not 'status' in payload):
             destroyWidgets()
-            microbitShow(VALID)
+            #microbitShow(VALID)
             formBadge(identifiant)
         else:
             insertLog("1",identifiant,"0","Mauvaise combinaison login/password")
-            microbitShow(INVALID)
+            #microbitShow(INVALID)
     except Exception as s:
         print("Erreur de validation",s)
 
@@ -71,32 +79,49 @@ def formBadge(identifiant):
     try:
         timer = time.time()
         id, text = None,None
-        while time.time() - timer < 5:
-            id, text = reader.read_no_block()
+        while time.time() - timer < 10:
+            #id, text = reader.read_no_block()
+            id = 996305625869
             if id is not None:
                 break
             time.sleep(0.1)
+            print(time.time() - timer)
         url = "https://www.btssio-carcouet.fr/ppe4/public/badge/" + identifiant + "/"+ str(id)
-        req = requests.get(url)
-        data = req.json()
+        payload = requests.get(url).json()
         
-        if("true" in data["status"]):
+        if("true" in payload["status"]):
             destroyWidgets()
-            microbitShow(VALID)
+            #microbitShow(VALID)
+            formRecoFaciale(identifiant,str(id))
         else:
-            insertLog("2",identifiant,str(id),"Mauvaise combinaison login/badge, ou erreur dans la requête API")
-            microbitShow(INVALID)
+            insertLog("2",identifiant,str(id),"Mauvaise combinaison login/badge, temps écoulé ou erreur dans la requête API")
+            #microbitShow(INVALID)
     finally:
         GPIO.cleanup()
-        
-# -------------------- /\ Nouvelle mise en forme /\ --------------------
 
-"""
-def formRecoFaciale(identifiant):
-    path_image_reco = "Images_Reco"
+def formRecoFaciale(identifiant,idBadge):
+    #btnCANCEL = Button(window, text="IOEZG",command=lambda:reconnaissanceFaciale(identifiant,path_image_reco))
+    #btnCANCEL.pack(side=LEFT,padx=5,pady=5)
+    labelBienvenue = Label(window, text="Identifiant : "+identifiant)
+    labelBienvenue.pack()
     
-    btnCANCEL = Button(window, text="IOEZG",command=lambda:reconnaissanceFaciale(identifiant,path_image_reco))
-    btnCANCEL.pack(side=LEFT,padx=5,pady=5)"""
+    labelReco = Label(window, text="Chargement...")
+    labelReco.pack()
+    
+    btnCancel = Button(window, text="Quitter",command=lambda:window.destroy(),width=10)
+    btnCancel.pack(side=LEFT,padx=5,pady=5)
+    
+    widgets.append(labelBienvenue)
+    widgets.append(labelReco)
+    widgets.append(btnCancel)
+    
+    val = reconnaissanceFaciale(identifiant,path_image_reco)
+    if(val == "ok"):
+        destroyWidgets()
+        print("========*========\nAUTHENTIFICATION REUSSIE !\n========*========")
+        window.after(2000,window.destroy)
+    else:
+        insertLog("3",identifiant,idBadge,val)
 
 def insertLog(numeroPhase,nom,numPhase,commentaire):
     window.destroy()
