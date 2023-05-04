@@ -1,4 +1,4 @@
-Ce dossier contient l'ensemble des images des utilisateurs :
+<p>Ce dossier contient l'ensemble des images des utilisateurs :
   |<br>
   |_>Nom1<br>
       |_>1.png<br>
@@ -12,4 +12,4 @@ Ce dossier contient l'ensemble des images des utilisateurs :
   |<br>
   |_>...<br>
   
-Chaque nom de dossier doit correspondre avec l'identifiant associé (nom de l'utilisateur).
+Chaque nom de dossier doit correspondre avec l'identifiant associé (nom de l'utilisateur).</p>
