@@ -1,15 +1,15 @@
 Ce dossier contient l'ensemble des images des utilisateurs :
-  |
-  |_>Nom1
-      |_>1.png
-      |_>2.png
-      |_>...
-  |
-  |_>Nom2
-      |_>1.png
-      |_>2.png
-      |_>...
-  |
-  |_>...
+  |<br>
+  |_>Nom1<br>
+      |_>1.png<br>
+      |_>2.png<br>
+      |_>...<br>
+  |<br>
+  |_>Nom2<br>
+      |_>1.png<br>
+      |_>2.png<br>
+      |_>...<br>
+  |<br>
+  |_>...<br>
   
 Chaque nom de dossier doit correspondre avec l'identifiant associé (nom de l'utilisateur).
