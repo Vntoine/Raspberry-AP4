@@ -1,7 +1,6 @@
 from tkinter import *
 from mfrc522 import SimpleMFRC522
-import requests, time, RPi.GPIO as GPIO
-import microbit
+import requests, time, RPi.GPIO as GPIO,microbit
 
 from ReconnaissanceFaciale import reconnaissanceFaciale
 from insertLogAcces import insertLogAcces
@@ -35,7 +34,7 @@ def formulaire():
     entryPassword = Entry(window, textvariable=valuePassword, width=15,show="*",font=("Helvetica",15))
     entryPassword.pack(padx=5,pady=5)
     
-    btnOk = Button(window, text="Ok",command=lambda:validation(valueId.get(),valuePassword.get()),width=10)
+    btnOk = Button(window, text="Ok",command=lambda:validationLogin(valueId.get(),valuePassword.get()),width=10)
     btnOk.pack(side=RIGHT,padx=5,pady=5)
     
     btnCancel = Button(window, text="Quitter",command=lambda:window.destroy(),width=10)
@@ -49,21 +48,21 @@ def formulaire():
     
     window.mainloop()
 
-def validation(identifiant,mdp):
+def validationLogin(identifiant,mdp):
     try:
         url = "https://www.btssio-carcouet.fr/ppe4/public/connect2/"+identifiant+"/"+mdp+"/infirmiere"
         payload = requests.get(url).json()
         if(not 'status' in payload):
             destroyWidgets()
             microbitShow(VALID)
-            formBadge(identifiant)
+            formulaireBadge(identifiant)
         else:
             insertLog("1",identifiant,"0","Mauvaise combinaison login/password")
             microbitShow(INVALID)
     except Exception as s:
         print("Erreur de validation",s)
 
-def formBadge(identifiant):
+def formulaireBadge(identifiant):
     labelBienvenue = Label(window, text="Bonjour "+identifiant+" !")
     labelBienvenue.pack()
     
@@ -84,21 +83,21 @@ def formBadge(identifiant):
             if id is not None:
                 break
             time.sleep(0.1)
-            print(time.time() - timer)
+            print(str(round((time.time() - timer),2)),"secondes")
         url = "https://www.btssio-carcouet.fr/ppe4/public/badge/" + identifiant + "/"+ str(id)
         payload = requests.get(url).json()
         
         if("true" in payload["status"]):
             destroyWidgets()
             microbitShow(VALID)
-            formRecoFaciale(identifiant,str(id))
+            formulaireRecoFaciale(identifiant,str(id))
         else:
             insertLog("2",identifiant,str(id),"Mauvaise combinaison login/badge, temps écoulé ou erreur dans la requête API")
             microbitShow(INVALID)
     finally:
         GPIO.cleanup()
 
-def formRecoFaciale(identifiant,idBadge):
+def formulaireRecoFaciale(identifiant,idBadge):
     labelBienvenue = Label(window, text="Identifiant : "+identifiant)
     labelBienvenue.pack()
     
@@ -133,7 +132,7 @@ def destroyWidgets():
     
 def microbitShow(image):
     microbit.display.show(image)
-    microbit.sleep(2000)
+    microbit.sleep(4000)
     microbit.display.clear()
 
 formulaire()
